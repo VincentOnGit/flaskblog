@@ -11,6 +11,7 @@ class Config(object):
 	FLASK_BLOG_SUBJECT_PREFIX = '[FlaskBlog]'
 	FLASK_BLOG_SENDER = 'FlaskBlog Admin <flask.blog@example.com>'
 	FLASK_BLOG_ADMIN = os.environ.get('FLASK_ADMIN')
+	SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 	@staticmethod
 	def init_app(app):
