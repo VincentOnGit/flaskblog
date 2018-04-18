@@ -11,7 +11,7 @@ class Config(object):
 	FLASK_BLOG_SUBJECT_PREFIX = '[FlaskBlog]'
 	FLASK_BLOG_SENDER = 'FlaskBlog Admin <flask.blog@example.com>'
 	FLASK_BLOG_ADMIN = os.environ.get('FLASK_ADMIN')
-	SQLALCHEMY_TRACK_MODIFICATIONS = True
+	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 	@staticmethod
 	def init_app(app):
@@ -21,8 +21,8 @@ class Config(object):
 class DevelopmentConfig(Config):
 	DEBUG = True
 	MAIL_SERVER = 'smtp.163.com'
-	MAIL_PORT = '465'
-	MAIL_USE_TLS = True
+	MAIL_PORT = 465
+	MAIL_USE_SSL = True
 	MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
 	MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
 	SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
