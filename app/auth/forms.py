@@ -27,3 +27,10 @@ class RegistrationForm(FlaskForm):
 	def validate_username(self, field):
 		if User.query.filter_by(username=field.data).first():
 			raise ValidationError('Username already in user.')
+
+
+class ChangePasswordForm(FlaskForm):
+	old_pwd = PasswordField('Old Password', validators=[DataRequired()])
+	new_pwd = PasswordField('New Password', validators=[DataRequired(), EqualTo('new_pwd2', message='Passwords must match.')])
+	new_pwd2 = PasswordField('Confirm New Password', validators=[DataRequired()])
+	submit = SubmitField('Confirm')
