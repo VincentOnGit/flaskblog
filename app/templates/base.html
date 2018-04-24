@@ -1,5 +1,11 @@
 {% extends "bootstrap/base.html" %}
 
+{% block head %}
+{{ super() }}
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+{% endblock %}
+
 {% block title %}
     Flask Blog
 {% endblock %}
@@ -19,6 +25,11 @@
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li>
+                            <a href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
+                        </li>
+                    {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     {% if current_user.is_authenticated %}
@@ -43,4 +54,9 @@
 
         {% block page_content %}{% endblock %}
     </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ moment.include_moment() }}
 {% endblock %}
