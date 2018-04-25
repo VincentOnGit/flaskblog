@@ -32,5 +32,13 @@
                 Edit Profile [Admin]
             </a>
         {% endif %}
+        {% if current_user.is_authenticated %}
+            <div>
+                <a href="{{ url_for('auth.change_password') }}">
+                    Click here to change password
+                </a>
+            </div>
+
+        {% endif %}
     </div>
 {% endblock %}

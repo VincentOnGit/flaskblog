@@ -1,13 +1,17 @@
 <p>
     Dear {{ user.username }},
+    <br/>
 
     Welcome to Flask Blog!
 
     To confirm your account please click on the following link:
+    <br/>
 
-    {{ url_for('auth.confirm', token=token, _external=True) }}
+    <a href="{{ url_for('auth.confirm', token=token, _external=True) }}">Click me</a>
+    <br/>
 
     Sincerely,
+    <br/>
 
     The Flask Blog Team
 </p>
