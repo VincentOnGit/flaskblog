@@ -8,6 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from markdown import markdown
+import bleach
 
 
 class Permissions(object):
@@ -46,6 +48,13 @@ class Role(db.Model):
 		db.session.commit()
 
 
+class Follow(db.Model):
+	__tablename__ = 'follows'
+	follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+	followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+	timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+
 class User(UserMixin, db.Model):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
@@ -63,6 +72,9 @@ class User(UserMixin, db.Model):
 	last_seen = db.Column(db.DateTime(), default=datetime.datetime.utcnow)
 	avatar_hash = db.Column(db.String(32))
 
+	followed = db.relationship('Follow', foreign_keys=[Follow.follower_id], backref=db.backref('follower', lazy='joined'), lazy='dynamic', cascade='all, delete-orphan')
+	followers = db.relationship('Follow', foreign_keys=[Follow.followed_id], backref=db.backref('followed', lazy='joined'), lazy='dynamic', cascade='all, delete-orphan')
+
 	def __repr__(self):
 		return '<User %r>' % self.username
 	
@@ -75,6 +87,15 @@ class User(UserMixin, db.Model):
 				self.role = Role.query.filter_by(default=True).first()
 		if self.email is not None and self.avatar_hash is None:
 			self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+		self.follow(self)
+
+	@staticmethod
+	def add_self_follows():
+		for user in User.query.all():
+			if not user.is_following(user):
+				user.follow(user)
+				db.session.add(user)
+				db.session.commit()
 
 	def can(self, permissions):
 		return self.role is not None and (self.role.permissions & permissions) == permissions
@@ -121,6 +142,23 @@ class User(UserMixin, db.Model):
 		hashtag = self.avatar_hash or hashlib.md5(self.email.encode('utf-8')).hexdigest()
 		return '{url}/{hashtag}?s={size}&d={default}&r={rating}'.format(url=url, hashtag=hashtag, size=size, default=default, rating=rating)
 
+	def follow(self, user):
+		if not self.is_following(user):
+			f = Follow(follower=self, followed=user)
+			db.session.add(f)
+
+	def unfollow(self, user):
+		f = self.followed.filter_by(followed_id=user.id).first()
+		if f:
+			db.session.delete(f)
+
+	def is_following(self, user):
+		return self.followed.filter_by(followed_id=user.id).first() is not None
+
+	@property
+	def followed_posts(self):
+		return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(Follow.follower_id == self.id)
+
 
 class AnonymousUser(AnonymousUserMixin):
 	def can(self, permissions):
@@ -136,8 +174,26 @@ class Post(db.Model):
 	body = db.Column(db.Text)
 	timestamp = db.Column(db.DateTime, index=True, default=datetime.datetime.utcnow)
 	author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+	body_html = db.Column(db.Text)
+
+	@staticmethod
+	def on_changed_body(target, value, oldvalue, initiator):
+		allowed_tags = ['code', 'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
+		target.body_html = bleach.linkify(bleach.clean(markdown(value, output_format='html'), tags=allowed_tags, strip=True))
 
 
+class Comment(db.Model):
+	__tablename__ = 'comments'
+	id = db.Column(db.Integer, primary_key=True)
+	body = db.Column(db.Text)
+	body_html = db.Column(db.Text)
+	timestamp = db.Column(db.DateTime, index=True, default=datetime.datetime.utcnow)
+	disabled = db.Column(db.Boolean)
+	author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+	post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+
+
+db.event.listen(Post.body, 'set', Post.on_changed_body)
 
 login_manager.anonymous_user = AnonymousUser
 

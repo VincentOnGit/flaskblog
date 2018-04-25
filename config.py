@@ -11,6 +11,8 @@ class Config(object):
 	FLASK_BLOG_SUBJECT_PREFIX = '[FlaskBlog]'
 	FLASK_BLOG_SENDER = 'williamlifan@163.com'
 	FLASK_BLOG_ADMIN = os.environ.get('FLASK_ADMIN')
+	FLASK_BLOG_POSTS_PER_PAGE = 20
+	FLASK_BLOG_FOLLOWERS_PER_PAGE = 20
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 	@staticmethod
