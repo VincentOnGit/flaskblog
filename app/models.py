@@ -64,6 +64,7 @@ class User(UserMixin, db.Model):
 	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 	confirmed = db.Column(db.Boolean, default=False)
 	posts = db.relationship('Post', backref='author', lazy='dynamic')
+	comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
 	name = db.Column(db.String(64))
 	location = db.Column(db.String(64))
@@ -87,7 +88,7 @@ class User(UserMixin, db.Model):
 				self.role = Role.query.filter_by(default=True).first()
 		if self.email is not None and self.avatar_hash is None:
 			self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
-		self.follow(self)
+		# self.follow(self)
 
 	@staticmethod
 	def add_self_follows():
